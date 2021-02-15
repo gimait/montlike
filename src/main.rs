@@ -31,7 +31,7 @@ const COLOR_LIGHT_GROUND: Color = Color {
 //parameters for dungeon generator
 const ROOM_MAX_SIZE: i32 = 10;
 const ROOM_MIN_SIZE: i32 = 6;
-const MAX_ROOMS: i32 = 30;
+const MAX_ROOMS: i32 = 300;
 
 // FOV
 const FOV_ALGO: FovAlgorithm = FovAlgorithm::Basic;
@@ -128,7 +128,7 @@ fn make_map(objects: &mut Vec<Object>) -> Map {
         let w = rand::thread_rng().gen_range(ROOM_MIN_SIZE, ROOM_MAX_SIZE + 1);
         let h = rand::thread_rng().gen_range(ROOM_MIN_SIZE, ROOM_MAX_SIZE + 1);
         let x = rand::thread_rng().gen_range(0, MAP_WIDTH - w);
-        let y = rand::thread_rng().gen_range(0, MAP_HEIGHT - w);
+        let y = rand::thread_rng().gen_range(0, MAP_HEIGHT - h);
 
         let new_room = Rect::new(x, y, w, h);
 
