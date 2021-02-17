@@ -1,3 +1,5 @@
+use tcod::input::Key;
+
 use crate::constants::*;
 use crate::objects::*;
 
@@ -8,18 +10,15 @@ pub enum PlayerAction {
     Exit,
 }
 
-pub fn handle_keys(tcod: &mut Tcod, game: &Game, objects: &mut [Object]) -> PlayerAction {
-    use tcod::input::Key;
+
+pub fn handle_keys(tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) -> PlayerAction {
     use tcod::input::KeyCode::*;
     use PlayerAction::*;
-    let key = tcod.root.wait_for_keypress(true);
     let player_alive = objects[PLAYER].alive;
-    match (key, key.text(), player_alive) {
+    match (tcod.key, tcod.key.text(), player_alive) {
         (
             Key {
-                code: Enter,
-                alt: true,
-                ..
+                code: Enter, alt: true, ..
             },
             _,
             _,
