@@ -35,3 +35,8 @@ pub const TORCH_RADIUS: i32 = 10;
 // Monsters
 pub const PLAYER: usize = 0;
 pub const MAX_ROOM_MONSTERS: i32 = 3;
+
+// Items
+pub const MAX_ROOM_ITEMS: i32 = 2;
+pub const INVENTORY_WIDTH: i32 = 50;
+pub const HEAL_AMOUNT: i32 = 4;

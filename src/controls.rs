@@ -2,6 +2,7 @@ use tcod::input::Key;
 
 use crate::constants::*;
 use crate::objects::*;
+use crate::render::inventory_menu;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PlayerAction {
@@ -10,8 +11,7 @@ pub enum PlayerAction {
     Exit,
 }
 
-
-pub fn handle_keys(tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) -> PlayerAction {
+pub fn handle_keys(tcod: &mut Tcod, game: &mut Game, objects: &mut Vec<Object>) -> PlayerAction {
     use tcod::input::KeyCode::*;
     use PlayerAction::*;
     let player_alive = objects[PLAYER].alive;
@@ -42,6 +42,26 @@ pub fn handle_keys(tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) -> 
         }
         (Key { code: Right, .. }, _, true) => {
             player_move_or_attack(1, 0, game, objects);
+            TookTurn
+        }
+        (Key { code: Text, .. }, "g", true) => {
+            let item_id = objects
+                .iter()
+                .position(|object| object.pos() == objects[PLAYER].pos() && object.item.is_some());
+            if let Some(item_id) = item_id {
+                pick_item_up(item_id, game, objects);
+            }
+            TookTurn
+        }
+        (Key { code: Text, .. }, "i", true) => {
+            let inventory_index = inventory_menu(
+                &game.inventory,
+                "Press the key next to an item to use it, or any other to cancel.\n",
+                &mut tcod.root,
+            );
+            if let Some(inventory_index) = inventory_index {
+                use_item(inventory_index, tcod, game, objects);
+            }
             TookTurn
         }
         _ => DidntTakeTurn,

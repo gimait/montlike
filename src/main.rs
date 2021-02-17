@@ -1,7 +1,7 @@
 use tcod::colors::*;
 use tcod::console::*;
-use tcod::map::Map as FovMap;
 use tcod::input::{self, Event};
+use tcod::map::Map as FovMap;
 
 pub mod constants;
 pub mod controls;
@@ -48,6 +48,7 @@ fn main() {
     let mut game = Game {
         map: make_map(&mut objects),
         messages: Messages::new(),
+        inventory: vec![],
     };
 
     for y in 0..MAP_HEIGHT {

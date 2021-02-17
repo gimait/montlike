@@ -1,7 +1,7 @@
 use tcod::colors::*;
 use tcod::console::*;
-use tcod::map::Map as FovMap;
 use tcod::input::{Key, Mouse};
+use tcod::map::Map as FovMap;
 
 use crate::constants::*;
 use crate::misc::mut_two;
@@ -19,6 +19,12 @@ pub struct Tcod {
 pub struct Game {
     pub map: Map,
     pub messages: Messages,
+    pub inventory: Vec<Object>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Item {
+    Heal,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -84,6 +90,7 @@ pub struct Object {
     pub alive: bool,
     pub fighter: Option<Fighter>,
     pub ai: Option<AI>,
+    pub item: Option<Item>,
 }
 
 impl Object {
@@ -98,6 +105,7 @@ impl Object {
             alive: false,
             fighter: None,
             ai: None,
+            item: None,
         }
     }
 
@@ -151,6 +159,15 @@ impl Object {
             );
         }
     }
+
+    pub fn heal(&mut self, amount: i32) {
+        if let Some(ref mut fighter) = self.fighter {
+            fighter.hp += amount;
+            if fighter.hp > fighter.max_hp {
+                fighter.hp = fighter.max_hp;
+            }
+        }
+    }
 }
 
 fn move_by(id: usize, dx: i32, dy: i32, map: &Map, objects: &mut [Object]) {
@@ -200,5 +217,61 @@ pub fn player_move_or_attack(dx: i32, dy: i32, game: &mut Game, objects: &mut [O
         None => {
             move_by(PLAYER, dx, dy, &game.map, objects);
         }
+    }
+}
+
+pub fn pick_item_up(object_id: usize, game: &mut Game, objects: &mut Vec<Object>) {
+    if game.inventory.len() >= 26 {
+        game.messages.add(
+            format!("Your inventory is full, cannot pick up {}.", objects[object_id].name),
+            RED,
+        );
+    } else {
+        let item = objects.swap_remove(object_id);
+        game.messages.add(format!("You picked up a {}!", item.name), GREEN);
+        game.inventory.push(item);
+    }
+}
+
+enum UseResult {
+    UsedUp,
+    Cancelled,
+}
+
+fn cast_heal(_inventory_id: usize, _tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) -> UseResult {
+    // heal the player
+    if let Some(fighter) = objects[PLAYER].fighter {
+        if fighter.hp == fighter.max_hp {
+            game.messages.add("You are already at full health.", RED);
+            return UseResult::Cancelled;
+        }
+        game.messages.add("Your wounds start to feel better!", LIGHT_VIOLET);
+        objects[PLAYER].heal(HEAL_AMOUNT);
+        return UseResult::UsedUp;
+    }
+    UseResult::Cancelled
+}
+
+pub fn use_item(inventory_id: usize, tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) {
+    use Item::*;
+    // just call the "use_function" if it is defined
+    if let Some(item) = game.inventory[inventory_id].item {
+        let on_use = match item {
+            Heal => cast_heal,
+        };
+        match on_use(inventory_id, tcod, game, objects) {
+            UseResult::UsedUp => {
+                // destroy after use, unless it was cancelled for some reason
+                game.inventory.remove(inventory_id);
+            }
+            UseResult::Cancelled => {
+                game.messages.add("Cancelled", WHITE);
+            }
+        }
+    } else {
+        game.messages.add(
+            format!("The {} cannot be used.", game.inventory[inventory_id].name),
+            WHITE,
+        );
     }
 }
