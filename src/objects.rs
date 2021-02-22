@@ -2,8 +2,10 @@ use tcod::colors::*;
 use tcod::console::*;
 use tcod::input::{Key, Mouse};
 use tcod::map::Map as FovMap;
+use rand::Rng;
 
 use crate::constants::*;
+use crate::controls::*;
 use crate::misc::mut_two;
 use crate::render::*;
 
@@ -25,6 +27,9 @@ pub struct Game {
 #[derive(Debug, Clone, Copy)]
 pub enum Item {
     Heal,
+    Lightning,
+    Confuse,
+    Fireball,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -77,6 +82,7 @@ pub struct Fighter {
 #[derive(Clone, Debug, PartialEq)]
 pub enum AI {
     Basic,
+    Confused { previous_ai: Box<AI>, num_turns: i32 },
 }
 
 #[derive(Debug)]
@@ -123,10 +129,12 @@ impl Object {
         (self.x, self.y)
     }
 
+    pub fn distance(&self, x: i32, y: i32) -> f32 {
+        (((x - self.x).pow(2) + (y - self.y).pow(2)) as f32).sqrt()
+    }
+
     pub fn distance_to(&self, other: &Object) -> f32 {
-        let dx = other.x - self.x;
-        let dy = other.y - self.y;
-        ((dx.pow(2) + dy.pow(2)) as f32).sqrt()
+        self.distance(other.x, other.y)
     }
 
     pub fn take_damage(&mut self, damage: i32, game: &mut Game) {
@@ -188,6 +196,17 @@ fn move_towards(id: usize, target_x: i32, target_y: i32, map: &Map, objects: &mu
 }
 
 pub fn ai_take_turn(monster_id: usize, tcod: &Tcod, game: &mut Game, objects: &mut [Object]) {
+    use AI::*;
+    if let Some(ai) = objects[monster_id].ai.take() {
+        let new_ai = match ai {
+            Basic => ai_basic(monster_id, tcod, game, objects),
+            Confused { previous_ai, num_turns } => ai_confused(monster_id, tcod, game, objects, previous_ai, num_turns),
+        };
+        objects[monster_id].ai = Some(new_ai);
+    }
+}
+
+fn ai_basic(monster_id: usize, tcod: &Tcod, game: &mut Game, objects: &mut [Object]) -> AI {
     let (monster_x, monster_y) = objects[monster_id].pos();
     if tcod.fov.is_in_fov(monster_x, monster_y) {
         if objects[monster_id].distance_to(&objects[PLAYER]) >= 2.0 {
@@ -197,6 +216,36 @@ pub fn ai_take_turn(monster_id: usize, tcod: &Tcod, game: &mut Game, objects: &m
             let (monster, player) = mut_two(monster_id, PLAYER, objects);
             monster.attack(player, game)
         }
+    }
+    AI::Basic
+}
+
+fn ai_confused(
+    monster_id: usize,
+    _tcod: &Tcod,
+    game: &mut Game,
+    objects: &mut [Object],
+    previous_ai: Box<AI>,
+    num_turns: i32,
+) -> AI {
+    if num_turns >= 0 {
+        // Confused
+        move_by(
+            monster_id,
+            rand::thread_rng().gen_range(-1, 2),
+            rand::thread_rng().gen_range(-1, 2),
+            &game.map,
+            objects,
+        );
+        AI::Confused {
+            previous_ai: previous_ai,
+            num_turns: num_turns - 1,
+        }
+    } else {
+        // Back to normal.
+        game.messages
+            .add(format!("The {} is confused no more!", objects[monster_id].name), RED);
+        *previous_ai
     }
 }
 
@@ -233,6 +282,22 @@ pub fn pick_item_up(object_id: usize, game: &mut Game, objects: &mut Vec<Object>
     }
 }
 
+fn closest_monster(tcod: &Tcod, objects: &[Object], max_range: i32) -> Option<usize> {
+    let mut closest_enemy = None;
+    let mut closest_dist = (max_range + 1) as f32;
+
+    for (id, object) in objects.iter().enumerate() {
+        if (id != PLAYER) && object.fighter.is_some() && object.ai.is_some() && tcod.fov.is_in_fov(object.x, object.y) {
+            let dist = objects[PLAYER].distance_to(object);
+            if dist < closest_dist {
+                closest_enemy = Some(id);
+                closest_dist = dist;
+            }
+        }
+    }
+    closest_enemy
+}
+
 enum UseResult {
     UsedUp,
     Cancelled,
@@ -252,12 +317,89 @@ fn cast_heal(_inventory_id: usize, _tcod: &mut Tcod, game: &mut Game, objects: &
     UseResult::Cancelled
 }
 
+fn cast_lightning(_inventory_id: usize, _tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) -> UseResult {
+    let monster_id = closest_monster(_tcod, objects, LIGHTNING_RANGE);
+    if let Some(monster_id) = monster_id {
+        game.messages.add(
+            format!(
+                "A lightning bolt stricks the {}, the damage is {} hit points.",
+                objects[monster_id].name, LIGHTNING_DAMAGE
+            ),
+            LIGHT_BLUE,
+        );
+        objects[monster_id].take_damage(LIGHTNING_DAMAGE, game);
+        UseResult::UsedUp
+    } else {
+        game.messages.add("No enemy is close enough to strike.", RED);
+        UseResult::Cancelled
+    }
+}
+
+fn cast_confuse(_inventory_id: usize, _tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) -> UseResult {
+    game.messages.add(
+        "Left-click an enemy to confuse it, or right-click to cancel.",
+        LIGHT_CYAN,
+    );
+    let monster_id = target_monster(_tcod, game, objects, Some(CONFUSE_RANGE as f32));
+    if let Some(monster_id) = monster_id {
+        let old_ai = objects[monster_id].ai.take().unwrap_or(AI::Basic);
+        objects[monster_id].ai = Some(AI::Confused {
+            previous_ai: Box::new(old_ai),
+            num_turns: CONFUSE_NUM_TURNS,
+        });
+        game.messages.add(
+            format!(
+                "The eyes of {} look vacant, as he starts to stumble around!",
+                objects[monster_id].name
+            ),
+            LIGHT_GREEN,
+        );
+        UseResult::UsedUp
+    } else {
+        game.messages.add("No enemy in range to strike.", RED);
+        UseResult::Cancelled
+    }
+}
+
+fn cast_fireball(_inventory_id: usize, tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) -> UseResult {
+    game.messages.add(
+        "Left-click a target tile for the fireball, or right-click to cancel.",
+        LIGHT_CYAN,
+    );
+    let (x, y) = match target_tile(tcod, game, objects, None) {
+        Some(tile_pos) => tile_pos,
+        None => return UseResult::Cancelled,
+    };
+    game.messages.add(
+        format!(
+            "The fireball explodes, burning everything within {} tiles!",
+            FIREBALL_RADIUS
+        ),
+        ORANGE,
+    );
+
+    for (id, obj) in objects.iter_mut().enumerate() {
+        if obj.distance(x, y) <= FIREBALL_RADIUS as f32 && obj.fighter.is_some() && id != PLAYER {
+            game.messages.add(
+                format!("The {} gets burned for {} hit points.", obj.name, FIREBALL_DAMAGE),
+                ORANGE,
+            );
+            obj.take_damage(FIREBALL_DAMAGE, game);
+        }
+    }
+
+    UseResult::UsedUp
+}
+
 pub fn use_item(inventory_id: usize, tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) {
     use Item::*;
     // just call the "use_function" if it is defined
     if let Some(item) = game.inventory[inventory_id].item {
         let on_use = match item {
             Heal => cast_heal,
+            Lightning => cast_lightning,
+            Confuse => cast_confuse,
+            Fireball => cast_fireball,
         };
         match on_use(inventory_id, tcod, game, objects) {
             UseResult::UsedUp => {

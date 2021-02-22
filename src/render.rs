@@ -111,6 +111,13 @@ pub fn inventory_menu(inventory: &[Object], header: &str, root: &mut Root) -> Op
     }
 }
 
+pub fn drop_item(inventory_id: usize, game: &mut Game, objects: &mut Vec<Object>) {
+    let mut item = game.inventory.remove(inventory_id);
+    item.set_pos(objects[PLAYER].x, objects[PLAYER].y);
+    game.messages.add(format!("You dropped a {}.", item.name), YELLOW);
+    objects.push(item);
+}
+
 #[derive(Clone, Copy, Debug)]
 struct Rect {
     x1: i32,
@@ -251,9 +258,26 @@ fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>) {
         let y = rand::thread_rng().gen_range(room.y1 + 1, room.y2);
 
         if !is_blocked(x, y, map, objects) {
-            let mut object = Object::new(x, y, '!', "healing potion", VIOLET, false);
-            object.item = Some(Item::Heal);
-            objects.push(object);
+            let dice = rand::random::<f32>();
+            let item = if dice < 0.7 {
+                let mut object = Object::new(x, y, '!', "healing potion", VIOLET, false);
+                object.item = Some(Item::Heal);
+                object
+            } else if dice < 0.8 {
+                let mut object = Object::new(x, y, '#', "lightning scroll", LIGHT_YELLOW, false);
+                object.item = Some(Item::Lightning);
+                object
+            } else if dice < 0.7 + 0.1 + 0.1 {
+                // create a fireball scroll (10% chance)
+                let mut object = Object::new(x, y, '#', "scroll of fireball", LIGHT_RED, false);
+                object.item = Some(Item::Fireball);
+                object
+            } else {
+                let mut object = Object::new(x, y, '#', "confusion scroll", LIGHT_PURPLE, false);
+                object.item = Some(Item::Confuse);
+                object
+            };
+            objects.push(item);
         }
     }
 }
