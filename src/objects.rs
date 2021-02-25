@@ -1,13 +1,15 @@
+use rand::Rng;
 use tcod::colors::*;
 use tcod::console::*;
 use tcod::input::{Key, Mouse};
 use tcod::map::Map as FovMap;
-use rand::Rng;
 
 use crate::constants::*;
 use crate::controls::*;
 use crate::misc::mut_two;
 use crate::render::*;
+
+use serde::{Deserialize, Serialize};
 
 pub struct Tcod {
     pub root: Root,
@@ -18,13 +20,14 @@ pub struct Tcod {
     pub mouse: Mouse,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Game {
     pub map: Map,
     pub messages: Messages,
     pub inventory: Vec<Object>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum Item {
     Heal,
     Lightning,
@@ -32,7 +35,7 @@ pub enum Item {
     Fireball,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum DeathCallback {
     Player,
     Monster,
@@ -70,7 +73,7 @@ pub fn monster_death(monster: &mut Object, game: &mut Game) {
     monster.name = format!("remains of {}", monster.name);
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Fighter {
     pub max_hp: i32,
     pub hp: i32,
@@ -79,13 +82,13 @@ pub struct Fighter {
     pub on_death: DeathCallback,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum AI {
     Basic,
     Confused { previous_ai: Box<AI>, num_turns: i32 },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Object {
     pub x: i32,
     pub y: i32,
