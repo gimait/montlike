@@ -46,3 +46,9 @@ pub const CONFUSE_RANGE: i32 = 8;
 pub const CONFUSE_NUM_TURNS: i32 = 10;
 pub const FIREBALL_RADIUS: i32 = 3;
 pub const FIREBALL_DAMAGE: i32 = 12;
+
+// Level ups
+pub const LEVEL_UP_BASE: i32 = 200;
+pub const LEVEL_UP_FACTOR: i32 = 150;
+pub const LEVEL_SCREEN_WIDTH: i32 = 40;
+pub const CHARACTER_SCREEN_WIDTH: i32 = 30;

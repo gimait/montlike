@@ -65,7 +65,14 @@ pub fn player_death(player: &mut Object, game: &mut Game) {
 pub fn monster_death(monster: &mut Object, game: &mut Game) {
     // transform it into a nasty corpse! it doesn't block, can't be
     // attacked and doesn't move
-    game.messages.add(format!("{} is dead!", monster.name), ORANGE);
+    game.messages.add(
+        format!(
+            "{} is dead! You gain {} experience points.",
+            monster.name,
+            monster.fighter.unwrap().xp
+        ),
+        ORANGE,
+    );
     monster.char = '%';
     monster.color = DARK_RED;
     monster.blocks = false;
@@ -80,6 +87,7 @@ pub struct Fighter {
     pub hp: i32,
     pub defense: i32,
     pub power: i32,
+    pub xp: i32,
     pub on_death: DeathCallback,
 }
 
@@ -99,6 +107,7 @@ pub struct Object {
     pub blocks: bool,
     pub alive: bool,
     pub always_visible: bool,
+    pub level: i32,
     pub fighter: Option<Fighter>,
     pub ai: Option<AI>,
     pub item: Option<Item>,
@@ -115,6 +124,7 @@ impl Object {
             blocks: blocks,
             alive: false,
             always_visible: false,
+            level: 1,
             fighter: None,
             ai: None,
             item: None,
@@ -143,7 +153,7 @@ impl Object {
         self.distance(other.x, other.y)
     }
 
-    pub fn take_damage(&mut self, damage: i32, game: &mut Game) {
+    pub fn take_damage(&mut self, damage: i32, game: &mut Game) -> Option<i32> {
         if let Some(fighter) = self.fighter.as_mut() {
             if damage > 0 {
                 fighter.hp -= damage;
@@ -153,8 +163,10 @@ impl Object {
             if fighter.hp <= 0 {
                 self.alive = false;
                 fighter.on_death.callback(self, game);
+                return Some(fighter.xp);
             }
         }
+        None
     }
 
     pub fn attack(&mut self, target: &mut Object, game: &mut Game) {
@@ -165,7 +177,9 @@ impl Object {
                 format!("{} attacks {} for {} hit points.", self.name, target.name, damage),
                 WHITE,
             );
-            target.take_damage(damage, game);
+            if let Some(xp) = target.take_damage(damage, game) {
+                self.fighter.as_mut().unwrap().xp += xp;
+            }
         } else {
             game.messages.add(
                 format!("{} attacks {} but it has no effect!", self.name, target.name),
@@ -333,7 +347,9 @@ fn cast_lightning(_inventory_id: usize, _tcod: &mut Tcod, game: &mut Game, objec
             ),
             LIGHT_BLUE,
         );
-        objects[monster_id].take_damage(LIGHTNING_DAMAGE, game);
+        if let Some(xp) = objects[monster_id].take_damage(LIGHTNING_DAMAGE, game) {
+            objects[PLAYER].fighter.as_mut().unwrap().xp += xp;
+        }
         UseResult::UsedUp
     } else {
         game.messages.add("No enemy is close enough to strike.", RED);
@@ -384,16 +400,21 @@ fn cast_fireball(_inventory_id: usize, tcod: &mut Tcod, game: &mut Game, objects
         ORANGE,
     );
 
+    let mut total_xp = 0;
     for (id, obj) in objects.iter_mut().enumerate() {
-        if obj.distance(x, y) <= FIREBALL_RADIUS as f32 && obj.fighter.is_some() && id != PLAYER {
+        if obj.distance(x, y) <= FIREBALL_RADIUS as f32 && obj.fighter.is_some() {
             game.messages.add(
                 format!("The {} gets burned for {} hit points.", obj.name, FIREBALL_DAMAGE),
                 ORANGE,
             );
-            obj.take_damage(FIREBALL_DAMAGE, game);
+            if let Some(xp) = obj.take_damage(FIREBALL_DAMAGE, game) {
+                if id != PLAYER {
+                    total_xp += xp;
+                }
+            }
         }
     }
-
+    objects[PLAYER].fighter.as_mut().unwrap().xp += total_xp;
     UseResult::UsedUp
 }
 
@@ -421,5 +442,45 @@ pub fn use_item(inventory_id: usize, tcod: &mut Tcod, game: &mut Game, objects: 
             format!("The {} cannot be used.", game.inventory[inventory_id].name),
             WHITE,
         );
+    }
+}
+
+pub fn level_up(tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) {
+    let player = &mut objects[PLAYER];
+    let level_up_xp = LEVEL_UP_BASE + player.level * LEVEL_UP_FACTOR;
+    if player.fighter.as_ref().map_or(0, |f| f.xp) >= level_up_xp {
+        player.level += 1;
+        game.messages.add(
+            format!("Your battle skills grow stronger! You reached level {}!", player.level,),
+            YELLOW,
+        );
+        let fighter = player.fighter.as_mut().unwrap();
+        let mut choice = None;
+        while choice.is_none() {
+            choice = menu(
+                "Level up! Choose stat to raise:\n",
+                &[
+                    format!("+20HP (Current: {})", fighter.max_hp),
+                    format!("+1ATK (Current: {})", fighter.power),
+                    format!("+1DEF (Current: {})", fighter.defense),
+                ],
+                LEVEL_SCREEN_WIDTH,
+                &mut tcod.root,
+            );
+        }
+        fighter.xp -= level_up_xp;
+        match choice.unwrap() {
+            0 => {
+                fighter.max_hp += 20;
+                fighter.hp = fighter.max_hp;
+            }
+            1 => {
+                fighter.power += 1;
+            }
+            2 => {
+                fighter.defense += 1;
+            }
+            _ => unreachable!(),
+        }
     }
 }

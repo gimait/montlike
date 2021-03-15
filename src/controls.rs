@@ -3,6 +3,7 @@ use tcod::input::{self, Event, Key};
 use crate::constants::*;
 use crate::objects::*;
 use crate::render::*;
+use crate::ui::msgbox;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PlayerAction {
@@ -85,6 +86,25 @@ pub fn handle_keys(tcod: &mut Tcod, game: &mut Game, objects: &mut Vec<Object>) 
             player_move_or_attack(1, 0, game, objects);
             TookTurn
         }
+        (Key { code: Home, .. }, _, true) | (Key { code: NumPad7, .. }, _, true) => {
+            player_move_or_attack(-1, -1, game, objects);
+            TookTurn
+        }
+        (Key { code: PageUp, .. }, _, true) | (Key { code: NumPad9, .. }, _, true) => {
+            player_move_or_attack(1, -1, game, objects);
+            TookTurn
+        }
+        (Key { code: End, .. }, _, true) | (Key { code: NumPad1, .. }, _, true) => {
+            player_move_or_attack(-1, 1, game, objects);
+            TookTurn
+        }
+        (Key { code: PageDown, .. }, _, true) | (Key { code: NumPad3, .. }, _, true) => {
+            player_move_or_attack(1, 1, game, objects);
+            TookTurn
+        }
+        (Key { code: NumPad5, .. }, _, true) => {
+            TookTurn // do nothing, i.e. wait for the monster to come to you
+        }
         (Key { code: Text, .. }, "g", true) => {
             let item_id = objects
                 .iter()
@@ -124,6 +144,29 @@ pub fn handle_keys(tcod: &mut Tcod, game: &mut Game, objects: &mut Vec<Object>) 
             if player_on_stairs {
                 next_level(tcod, game, objects);
             }
+            DidntTakeTurn
+        }
+        (Key { code: Text, .. }, "c", true) => {
+            // show character information
+            let player = &objects[PLAYER];
+            let level = player.level;
+            let level_up_xp = LEVEL_UP_BASE + player.level * LEVEL_UP_FACTOR;
+            if let Some(fighter) = player.fighter.as_ref() {
+                let msg = format!(
+                    "Character information
+
+        Level: {}
+        Experience: {}
+        Experience to level up: {}
+
+        Maximum HP: {}
+        Attack: {}
+        Defense: {}",
+                    level, fighter.xp, level_up_xp, fighter.max_hp, fighter.power, fighter.defense
+                );
+                msgbox(&msg, CHARACTER_SCREEN_WIDTH, &mut tcod.root);
+            }
+
             DidntTakeTurn
         }
         _ => DidntTakeTurn,

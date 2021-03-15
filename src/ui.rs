@@ -19,6 +19,7 @@ pub fn new_game(tcod: &mut Tcod) -> (Game, Vec<Object>) {
         hp: 30,
         defense: 2,
         power: 5,
+        xp: 0,
         on_death: DeathCallback::Player,
     });
 
@@ -28,6 +29,7 @@ pub fn new_game(tcod: &mut Tcod) -> (Game, Vec<Object>) {
         map: make_map(&mut objects),
         messages: Messages::new(),
         inventory: vec![],
+        dungeon_level: 0,
     };
 
     initialise_fov(tcod, &game.map);
@@ -51,6 +53,8 @@ pub fn play_game(tcod: &mut Tcod, game: &mut Game, objects: &mut Vec<Object>) {
         let fov_recompute = previous_player_position != (objects[PLAYER].pos());
         render_all(tcod, game, &objects, fov_recompute);
         tcod.root.flush();
+
+        level_up(tcod, game, objects);
 
         previous_player_position = objects[PLAYER].pos();
         let player_action = handle_keys(tcod, game, objects);
@@ -76,7 +80,7 @@ fn save_game(game: &Game, objects: &[Object]) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn msgbox(text: &str, width: i32, root: &mut Root) {
+pub fn msgbox(text: &str, width: i32, root: &mut Root) {
     let options: &[&str] = &[];
     menu(text, options, width, root);
 }
