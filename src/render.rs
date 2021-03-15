@@ -5,9 +5,12 @@ use tcod::console::*;
 use tcod::input::Mouse;
 use tcod::map::Map as FovMap;
 
+use serde::{Deserialize, Serialize};
+
 use crate::constants::*;
 use crate::objects::*;
 
+#[derive(Serialize, Deserialize)]
 pub struct Messages {
     messages: Vec<(String, Color)>,
 }
@@ -26,7 +29,7 @@ impl Messages {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Tile {
     pub blocked: bool,
     pub block_sight: bool,
@@ -53,10 +56,14 @@ impl Tile {
 
 pub type Map = Vec<Vec<Tile>>;
 
-fn menu<T: AsRef<str>>(header: &str, options: &[T], width: i32, root: &mut Root) -> Option<usize> {
+pub fn menu<T: AsRef<str>>(header: &str, options: &[T], width: i32, root: &mut Root) -> Option<usize> {
     assert!(options.len() <= 26, "Cannot have a menu with more than 26 options.");
 
-    let header_height = root.get_height_rect(0, 0, width, SCREEN_HEIGHT, header);
+    let header_height = if header.is_empty() {
+        0
+    } else {
+        root.get_height_rect(0, 0, width, SCREEN_HEIGHT, header)
+    };
     let height = options.len() as i32 + header_height;
 
     let mut window = Offscreen::new(width, height);
@@ -348,6 +355,20 @@ fn get_names_under_mouse(mouse: Mouse, objects: &[Object], fov_map: &FovMap) -> 
         .collect::<Vec<_>>();
 
     names.join(", ") // join the names, separated by commas
+}
+
+pub fn initialise_fov(tcod: &mut Tcod, map: &Map) {
+    for y in 0..MAP_HEIGHT {
+        for x in 0..MAP_WIDTH {
+            tcod.fov.set(
+                x,
+                y,
+                !map[x as usize][y as usize].block_sight,
+                !map[x as usize][y as usize].blocked,
+            );
+        }
+    }
+    tcod.con.clear();
 }
 
 pub fn render_all(tcod: &mut Tcod, game: &mut Game, objects: &[Object], fov_recompute: bool) {
