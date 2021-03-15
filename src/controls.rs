@@ -117,6 +117,15 @@ pub fn handle_keys(tcod: &mut Tcod, game: &mut Game, objects: &mut Vec<Object>) 
             }
             DidntTakeTurn
         }
+        (Key { code: Text, .. }, "<", true) => {
+            let player_on_stairs = objects
+                .iter()
+                .any(|object| object.pos() == objects[PLAYER].pos() && object.name == "stairs");
+            if player_on_stairs {
+                next_level(tcod, game, objects);
+            }
+            DidntTakeTurn
+        }
         _ => DidntTakeTurn,
     }
 }

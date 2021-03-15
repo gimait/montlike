@@ -22,6 +22,7 @@ pub struct Game {
     pub map: Map,
     pub messages: Messages,
     pub inventory: Vec<Object>,
+    pub dungeon_level: u32,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -94,6 +95,7 @@ pub struct Object {
     pub name: String,
     pub blocks: bool,
     pub alive: bool,
+    pub always_visible: bool,
     pub fighter: Option<Fighter>,
     pub ai: Option<AI>,
     pub item: Option<Item>,
@@ -109,6 +111,7 @@ impl Object {
             name: name.into(),
             blocks: blocks,
             alive: false,
+            always_visible: false,
             fighter: None,
             ai: None,
             item: None,

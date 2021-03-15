@@ -169,8 +169,10 @@ fn create_v_tunnel(y1: i32, y2: i32, x: i32, map: &mut Map) {
 
 pub fn make_map(objects: &mut Vec<Object>) -> Map {
     let mut map = vec![vec![Tile::wall(); MAP_HEIGHT as usize]; MAP_WIDTH as usize];
-
     let mut rooms = vec![];
+
+    assert_eq!(&objects[PLAYER] as *const _, &objects[0] as *const _);
+    objects.truncate(1);
 
     for _ in 0..MAX_ROOMS {
         let w = rand::thread_rng().gen_range(ROOM_MIN_SIZE, ROOM_MAX_SIZE + 1);
@@ -204,6 +206,11 @@ pub fn make_map(objects: &mut Vec<Object>) -> Map {
             rooms.push(new_room)
         }
     }
+
+    let (last_room_x, last_room_y) = rooms[rooms.len() - 1].center();
+    let mut stairs = Object::new(last_room_x, last_room_y, '<', "stairs", WHITE, false);
+    stairs.always_visible = true;
+    objects.push(stairs);
 
     map
 }
@@ -280,6 +287,23 @@ fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>) {
             objects.push(item);
         }
     }
+}
+
+pub fn next_level(tcod: &mut Tcod, game: &mut Game, objects: &mut Vec<Object>) {
+    game.messages.add(
+        "You take a moment to rest, and recover your strength.",
+        VIOLET,
+    );
+    let heal_hp = objects[PLAYER].fighter.map_or(0, |f| f.max_hp / 2);
+    objects[PLAYER].heal(heal_hp);
+
+    game.messages.add(
+        "After a rare moment of peace, you descend deeper into the heart of the dungeon..",
+        RED,
+    );
+    game.dungeon_level += 1;
+    game.map = make_map(objects);
+    initialise_fov(tcod, &game.map);
 }
 
 fn render_bar(
