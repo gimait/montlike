@@ -34,18 +34,16 @@ pub const TORCH_RADIUS: i32 = 10;
 
 // Monsters
 pub const PLAYER: usize = 0;
-pub const MAX_ROOM_MONSTERS: i32 = 3;
 
 // Items
-pub const MAX_ROOM_ITEMS: i32 = 2;
 pub const INVENTORY_WIDTH: i32 = 50;
-pub const HEAL_AMOUNT: i32 = 4;
+pub const HEAL_AMOUNT: i32 = 40;
 pub const LIGHTNING_DAMAGE: i32 = 40;
 pub const LIGHTNING_RANGE: i32 = 5;
 pub const CONFUSE_RANGE: i32 = 8;
 pub const CONFUSE_NUM_TURNS: i32 = 10;
 pub const FIREBALL_RADIUS: i32 = 3;
-pub const FIREBALL_DAMAGE: i32 = 12;
+pub const FIREBALL_DAMAGE: i32 = 25;
 
 // Level ups
 pub const LEVEL_UP_BASE: i32 = 200;

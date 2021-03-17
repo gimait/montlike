@@ -15,10 +15,10 @@ pub fn new_game(tcod: &mut Tcod) -> (Game, Vec<Object>) {
     let mut player = Object::new(0, 0, '@', "player", WHITE, true);
     player.alive = true;
     player.fighter = Some(Fighter {
-        max_hp: 30,
-        hp: 30,
-        defense: 2,
-        power: 5,
+        max_hp: 100,
+        hp: 100,
+        defense: 1,
+        power: 4,
         xp: 0,
         on_death: DeathCallback::Player,
     });
@@ -26,10 +26,10 @@ pub fn new_game(tcod: &mut Tcod) -> (Game, Vec<Object>) {
     let mut objects = vec![player];
 
     let mut game = Game {
-        map: make_map(&mut objects),
+        map: make_map(&mut objects, 1),
         messages: Messages::new(),
         inventory: vec![],
-        dungeon_level: 0,
+        dungeon_level: 1,
     };
 
     initialise_fov(tcod, &game.map);
