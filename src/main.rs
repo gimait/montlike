@@ -1,12 +1,13 @@
 use tcod::console::*;
 use tcod::map::Map as FovMap;
 
-pub mod constants;
-pub mod controls;
-pub mod misc;
-pub mod objects;
-pub mod render;
-pub mod ui;
+mod constants;
+mod controls;
+mod misc;
+mod objects;
+mod render;
+mod ui;
+
 use constants::*;
 use objects::*;
 use ui::*;

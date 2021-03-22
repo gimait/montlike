@@ -1,7 +1,7 @@
 use tcod::input::{self, Event, Key};
 
 use crate::constants::*;
-use crate::objects::*;
+use crate::objects::{game::*, object::*, player::*, Tcod};
 use crate::render::*;
 use crate::ui::msgbox;
 
