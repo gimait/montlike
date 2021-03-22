@@ -9,7 +9,7 @@ use tcod::map::Map as FovMap;
 use serde::{Deserialize, Serialize};
 
 use crate::constants::*;
-use crate::objects::{object::*, game::*, fighter::*, item::*, ai::*, *};
+use crate::objects::{ai::*, fighter::*, game::*, item::*, object::*, *};
 
 #[derive(Serialize, Deserialize)]
 pub struct Messages {

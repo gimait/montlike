@@ -1,6 +1,4 @@
-
-use crate::objects::{*, item::*};
-
+use crate::objects::{item::*, *};
 
 pub fn player_move_or_attack(dx: i32, dy: i32, game: &mut Game, objects: &mut [Object]) {
     let x = objects[PLAYER].x + dx;

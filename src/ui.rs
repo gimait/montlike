@@ -8,7 +8,7 @@ use tcod::input::{self, Event};
 
 use crate::constants::*;
 use crate::controls::*;
-use crate::objects::{game::*, object::*, fighter::*, player::*, ai::*, Tcod};
+use crate::objects::{ai::*, fighter::*, game::*, object::*, player::*, Tcod};
 use crate::render::*;
 
 pub fn new_game(tcod: &mut Tcod) -> (Game, Vec<Object>) {

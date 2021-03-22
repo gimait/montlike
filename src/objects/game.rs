@@ -1,6 +1,5 @@
-
-use crate::render::*;
 use super::object::Object;
+use crate::render::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]

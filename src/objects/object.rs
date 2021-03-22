@@ -1,8 +1,7 @@
-
-use tcod::colors::*;
 use serde::{Deserialize, Serialize};
+use tcod::colors::*;
 
-use crate::objects::{*, fighter::Fighter};
+use crate::objects::{fighter::Fighter, *};
 use game::Game;
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -1,8 +1,8 @@
-pub mod game;
-pub mod object;
-pub mod fighter;
-pub mod item;
 pub mod ai;
+pub mod fighter;
+pub mod game;
+pub mod item;
+pub mod object;
 pub mod player;
 
 use rand::Rng;
@@ -16,10 +16,10 @@ use crate::controls::*;
 use crate::misc::mut_two;
 use crate::render::*;
 
-use game::Game;
-use object::Object;
-use item::Item;
 use ai::AI;
+use game::Game;
+use item::Item;
+use object::Object;
 
 pub struct Tcod {
     pub root: Root,
@@ -64,4 +64,3 @@ fn move_by(id: usize, dx: i32, dy: i32, map: &Map, objects: &mut [Object]) {
         objects[id].set_pos(x + dx, y + dy);
     }
 }
-
