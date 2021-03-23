@@ -1,5 +1,6 @@
 use crate::objects::*;
 use serde::{Deserialize, Serialize};
+use tcod::input::{self, Event};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum Item {
@@ -28,6 +29,47 @@ fn closest_monster(tcod: &Tcod, objects: &[Object], max_range: i32) -> Option<us
         }
     }
     closest_enemy
+}
+
+fn target_tile(tcod: &mut Tcod, game: &mut Game, objects: &[Object], max_range: Option<f32>) -> Option<(i32, i32)> {
+    use tcod::input::KeyCode::Escape;
+    loop {
+        tcod.root.flush();
+        let event = input::check_for_event(input::KEY_PRESS | input::MOUSE).map(|e| e.1);
+        match event {
+            Some(Event::Mouse(m)) => tcod.mouse = m,
+            Some(Event::Key(k)) => tcod.key = k,
+            None => tcod.key = Default::default(),
+        }
+        render_all(tcod, game, objects, false);
+
+        let (x, y) = (tcod.mouse.cx as i32, tcod.mouse.cy as i32);
+        let in_fov = (x < MAP_WIDTH) && (y < MAP_HEIGHT) && tcod.fov.is_in_fov(x, y);
+        let in_range = max_range.map_or(true, |range| objects[PLAYER].distance(x, y) <= range);
+        if tcod.mouse.lbutton_pressed && in_fov && in_range {
+            return Some((x, y));
+        }
+
+        if tcod.mouse.rbutton_pressed || tcod.key.code == Escape {
+            return None;
+        }
+    }
+}
+
+fn target_monster(tcod: &mut Tcod, game: &mut Game, objects: &[Object], max_range: Option<f32>) -> Option<usize> {
+    loop {
+        match target_tile(tcod, game, objects, max_range) {
+            Some((x, y)) => {
+                // return the first clicked monster, otherwise continue looping
+                for (id, obj) in objects.iter().enumerate() {
+                    if obj.pos() == (x, y) && obj.fighter.is_some() && id != PLAYER {
+                        return Some(id);
+                    }
+                }
+            }
+            None => return None,
+        }
+    }
 }
 
 pub fn cast_heal(_inventory_id: usize, _tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) -> UseResult {

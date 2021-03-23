@@ -8,8 +8,9 @@ use tcod::input::{self, Event};
 
 use crate::constants::*;
 use crate::controls::*;
+use crate::map_generation::make_map::make_map;
 use crate::objects::{ai::*, fighter::*, game::*, object::*, player::*, Tcod};
-use crate::render::*;
+use crate::render::{menus::menu, messages::Messages, *};
 
 pub fn new_game(tcod: &mut Tcod) -> (Game, Vec<Object>) {
     let mut player = Object::new(0, 0, '@', "player", WHITE, true);

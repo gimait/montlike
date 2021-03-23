@@ -3,6 +3,7 @@ use tcod::map::Map as FovMap;
 
 mod constants;
 mod controls;
+mod map_generation;
 mod misc;
 mod objects;
 mod render;
