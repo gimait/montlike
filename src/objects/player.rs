@@ -1,4 +1,4 @@
-use crate::objects::{equipment::toggle_equipment, item::*, *};
+use crate::objects::{equipment::*, item::*, *};
 use crate::render::menus::menu;
 
 pub fn player_move_or_attack(dx: i32, dy: i32, game: &mut Game, objects: &mut [Object]) {
@@ -30,8 +30,26 @@ pub fn pick_item_up(object_id: usize, game: &mut Game, objects: &mut Vec<Object>
     } else {
         let item = objects.swap_remove(object_id);
         game.messages.add(format!("You picked up a {}!", item.name), GREEN);
+        let index = game.inventory.len();
+        let slot = item.equipment.map(|e| e.slot);
         game.inventory.push(item);
+
+        if let Some(slot) = slot {
+            if get_equipped_in_slot(slot, &game.inventory).is_none() {
+                game.inventory[index].equip(&mut game.messages);
+            }
+        }
     }
+}
+
+pub fn drop_item(inventory_id: usize, game: &mut Game, objects: &mut Vec<Object>) {
+    let mut item = game.inventory.remove(inventory_id);
+    if item.equipment.is_some() {
+        item.dequip(&mut game.messages);
+    }
+    item.set_pos(objects[PLAYER].x, objects[PLAYER].y);
+    game.messages.add(format!("You dropped a {}.", item.name), YELLOW);
+    objects.push(item);
 }
 
 pub fn use_item(inventory_id: usize, tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) {

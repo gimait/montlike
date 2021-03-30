@@ -39,13 +39,6 @@ impl Tile {
 
 pub type Map = Vec<Vec<Tile>>;
 
-pub fn drop_item(inventory_id: usize, game: &mut Game, objects: &mut Vec<Object>) {
-    let mut item = game.inventory.remove(inventory_id);
-    item.set_pos(objects[PLAYER].x, objects[PLAYER].y);
-    game.messages.add(format!("You dropped a {}.", item.name), YELLOW);
-    objects.push(item);
-}
-
 pub fn is_blocked(x: i32, y: i32, map: &Map, objects: &[Object]) -> bool {
     if map[x as usize][y as usize].blocked {
         return true;

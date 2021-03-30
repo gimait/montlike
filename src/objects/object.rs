@@ -115,7 +115,7 @@ impl Object {
         if let Some(ref mut equipment) = self.equipment {
             if !equipment.equipped {
                 equipment.equipped = true;
-                messages.add(format!("Equipped {} on {:?}.", self.name, equipment.slot), LIGHT_GREEN)
+                messages.add(format!("Equipped {} on {}.", self.name, equipment.slot), LIGHT_GREEN)
             } else {
                 messages.add(format!("Can't equip {:?} because it's not an Equipment.", self), RED);
             }
@@ -131,7 +131,7 @@ impl Object {
             if equipment.equipped {
                 equipment.equipped = false;
                 messages.add(
-                    format!("Dequipped {} from {:?}.", self.name, equipment.slot),
+                    format!("Dequipped {} from {}.", self.name, equipment.slot),
                     LIGHT_YELLOW,
                 );
             }
