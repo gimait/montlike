@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 use tcod::colors::*;
 
-use crate::objects::{fighter::Fighter, *};
+use crate::objects::{equipment::Equipment, fighter::Fighter, *};
+use crate::render::messages::Messages;
 use game::Game;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,6 +19,7 @@ pub struct Object {
     pub fighter: Option<Fighter>,
     pub ai: Option<AI>,
     pub item: Option<Item>,
+    pub equipment: Option<Equipment>,
 }
 
 impl Object {
@@ -35,6 +37,7 @@ impl Object {
             fighter: None,
             ai: None,
             item: None,
+            equipment: None,
         }
     }
 
@@ -101,6 +104,39 @@ impl Object {
             if fighter.hp > fighter.max_hp {
                 fighter.hp = fighter.max_hp;
             }
+        }
+    }
+
+    pub fn equip(&mut self, messages: &mut Messages) {
+        if self.item.is_none() {
+            messages.add(format!("Can't equip {:?} because it's not an Item", self), RED);
+            return;
+        };
+        if let Some(ref mut equipment) = self.equipment {
+            if !equipment.equipped {
+                equipment.equipped = true;
+                messages.add(format!("Equipped {} on {:?}.", self.name, equipment.slot), LIGHT_GREEN)
+            } else {
+                messages.add(format!("Can't equip {:?} because it's not an Equipment.", self), RED);
+            }
+        }
+    }
+
+    pub fn dequip(&mut self, messages: &mut Messages) {
+        if self.item.is_none() {
+            messages.add(format!("Can't dequip {:?} because it's not an Item.", self), RED);
+            return;
+        };
+        if let Some(ref mut equipment) = self.equipment {
+            if equipment.equipped {
+                equipment.equipped = false;
+                messages.add(
+                    format!("Dequipped {} from {:?}.", self.name, equipment.slot),
+                    LIGHT_YELLOW,
+                );
+            }
+        } else {
+            messages.add(format!("Can't dequip {:?} because it's not an Equipment.", self), RED);
         }
     }
 }

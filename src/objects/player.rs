@@ -1,4 +1,4 @@
-use crate::objects::{item::*, *};
+use crate::objects::{equipment::toggle_equipment, item::*, *};
 use crate::render::menus::menu;
 
 pub fn player_move_or_attack(dx: i32, dy: i32, game: &mut Game, objects: &mut [Object]) {
@@ -43,12 +43,14 @@ pub fn use_item(inventory_id: usize, tcod: &mut Tcod, game: &mut Game, objects: 
             Lightning => cast_lightning,
             Confuse => cast_confuse,
             Fireball => cast_fireball,
+            Equipment => toggle_equipment,
         };
         match on_use(inventory_id, tcod, game, objects) {
             UseResult::UsedUp => {
                 // destroy after use, unless it was cancelled for some reason
                 game.inventory.remove(inventory_id);
             }
+            UseResult::UsedAndKept => {}
             UseResult::Cancelled => {
                 game.messages.add("Cancelled", WHITE);
             }

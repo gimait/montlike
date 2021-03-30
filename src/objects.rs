@@ -1,4 +1,5 @@
 pub mod ai;
+pub mod equipment;
 pub mod fighter;
 pub mod game;
 pub mod item;

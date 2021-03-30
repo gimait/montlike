@@ -8,10 +8,12 @@ pub enum Item {
     Lightning,
     Confuse,
     Fireball,
+    Equipment,
 }
 
 pub enum UseResult {
     UsedUp,
+    UsedAndKept,
     Cancelled,
 }
 

@@ -1,5 +1,5 @@
 use crate::constants::*;
-use crate::objects::{ai::*, fighter::*, item::Item, object::Object};
+use crate::objects::{ai::*, equipment::*, fighter::*, item::Item, object::Object};
 use rand::distributions::{IndependentSample, Weighted, WeightedChoice};
 use rand::Rng;
 use tcod::colors::*;
@@ -95,6 +95,10 @@ fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>, level: u32) {
             weight: from_dungeon_level(&[Transition { level: 2, value: 10 }], level),
             item: Item::Confuse,
         },
+        Weighted {
+            weight: 1000,
+            item: Item::Equipment,
+        },
     ];
 
     let monster_choice = WeightedChoice::new(monster_chances);
@@ -166,6 +170,15 @@ fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>, level: u32) {
                 Item::Confuse => {
                     let mut object = Object::new(x, y, '#', "confusion scroll", LIGHT_PURPLE, false);
                     object.item = Some(Item::Confuse);
+                    object
+                }
+                Item::Equipment => {
+                    let mut object = Object::new(x, y, '/', "sword", SKY, false);
+                    object.item = Some(Item::Equipment);
+                    object.equipment = Some(Equipment {
+                        equipped: false,
+                        slot: Slot::RightHand,
+                    });
                     object
                 }
             };
