@@ -8,7 +8,8 @@ pub enum Item {
     Lightning,
     Confuse,
     Fireball,
-    Equipment,
+    Sword,
+    Shield,
 }
 
 pub enum UseResult {
@@ -76,13 +77,14 @@ fn target_monster(tcod: &mut Tcod, game: &mut Game, objects: &[Object], max_rang
 
 pub fn cast_heal(_inventory_id: usize, _tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) -> UseResult {
     // heal the player
-    if let Some(fighter) = objects[PLAYER].fighter {
-        if fighter.hp == fighter.max_hp {
+    let player = &mut objects[PLAYER];
+    if let Some(fighter) = player.fighter {
+        if fighter.hp == player.max_hp(game) {
             game.messages.add("You are already at full health.", RED);
             return UseResult::Cancelled;
         }
         game.messages.add("Your wounds start to feel better!", LIGHT_VIOLET);
-        objects[PLAYER].heal(HEAL_AMOUNT);
+        player.heal(HEAL_AMOUNT, game);
         return UseResult::UsedUp;
     }
     UseResult::Cancelled

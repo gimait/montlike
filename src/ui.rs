@@ -9,17 +9,17 @@ use tcod::input::{self, Event};
 use crate::constants::*;
 use crate::controls::*;
 use crate::map_generation::make_map::make_map;
-use crate::objects::{ai::*, fighter::*, game::*, object::*, player::*, Tcod};
+use crate::objects::{ai::*, equipment::*, fighter::*, game::*, item::*, object::*, player::*, Tcod};
 use crate::render::{menus::menu, messages::Messages, *};
 
 pub fn new_game(tcod: &mut Tcod) -> (Game, Vec<Object>) {
     let mut player = Object::new(0, 0, '@', "player", WHITE, true);
     player.alive = true;
     player.fighter = Some(Fighter {
-        max_hp: 100,
         hp: 100,
-        defense: 1,
-        power: 4,
+        base_max_hp: 100,
+        base_defense: 1,
+        base_power: 2,
         xp: 0,
         on_death: DeathCallback::Player,
     });
@@ -33,6 +33,17 @@ pub fn new_game(tcod: &mut Tcod) -> (Game, Vec<Object>) {
         dungeon_level: 1,
     };
 
+    let mut dagger = Object::new(0, 0, '-', "dagger", SKY, false);
+    dagger.item = Some(Item::Sword);
+    dagger.equipment = Some(Equipment {
+        equipped: true,
+        slot: Slot::LeftHand,
+        hp_bonus: 0,
+        defense_bonus: 0,
+        power_bonus: 2,
+    });
+
+    game.inventory.push(dagger);
     initialise_fov(tcod, &game.map);
 
     game.messages.add("Yo, welcome!", RED);

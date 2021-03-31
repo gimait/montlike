@@ -81,7 +81,7 @@ impl Object {
 
     pub fn attack(&mut self, target: &mut Object, game: &mut Game) {
         // a simple formula for attack damage (attacker power - defender defense)
-        let damage = self.fighter.map_or(0, |f| f.power) - target.fighter.map_or(0, |f| f.defense);
+        let damage = self.power(game) - target.defense(game);
         if damage > 0 {
             game.messages.add(
                 format!("{} attacks {} for {} hit points.", self.name, target.name, damage),
@@ -98,11 +98,12 @@ impl Object {
         }
     }
 
-    pub fn heal(&mut self, amount: i32) {
+    pub fn heal(&mut self, amount: i32, game: &Game) {
+        let max_hp = self.max_hp(game);
         if let Some(ref mut fighter) = self.fighter {
             fighter.hp += amount;
-            if fighter.hp > fighter.max_hp {
-                fighter.hp = fighter.max_hp;
+            if fighter.hp > max_hp {
+                fighter.hp = max_hp;
             }
         }
     }
@@ -138,5 +139,35 @@ impl Object {
         } else {
             messages.add(format!("Can't dequip {:?} because it's not an Equipment.", self), RED);
         }
+    }
+
+    fn get_all_equipped(&self, game: &Game) -> Vec<Equipment> {
+        if self.name == "player" {
+            game.inventory
+                .iter()
+                .filter(|item| item.equipment.map_or(false, |e| e.equipped))
+                .map(|item| item.equipment.unwrap())
+                .collect()
+        } else {
+            vec![]
+        }
+    }
+
+    pub fn power(&self, game: &Game) -> i32 {
+        let base = self.fighter.map_or(0, |f| f.base_power);
+        let bonus: i32 = self.get_all_equipped(game).iter().map(|e| e.power_bonus).sum();
+        base + bonus
+    }
+
+    pub fn defense(&self, game: &Game) -> i32 {
+        let base = self.fighter.map_or(0, |f| f.base_defense);
+        let bonus: i32 = self.get_all_equipped(game).iter().map(|e| e.defense_bonus).sum();
+        base + bonus
+    }
+
+    pub fn max_hp(&self, game: &Game) -> i32 {
+        let base = self.fighter.map_or(0, |f| f.base_max_hp);
+        let bonus: i32 = self.get_all_equipped(game).iter().map(|e| e.hp_bonus).sum();
+        base + bonus
     }
 }

@@ -49,8 +49,8 @@ pub fn is_blocked(x: i32, y: i32, map: &Map, objects: &[Object]) -> bool {
 pub fn next_level(tcod: &mut Tcod, game: &mut Game, objects: &mut Vec<Object>) {
     game.messages
         .add("You take a moment to rest, and recover your strength.", VIOLET);
-    let heal_hp = objects[PLAYER].fighter.map_or(0, |f| f.max_hp / 2);
-    objects[PLAYER].heal(heal_hp);
+    let heal_hp = objects[PLAYER].max_hp(game) / 2;
+    objects[PLAYER].heal(heal_hp, game);
 
     game.messages.add(
         "After a rare moment of peace, you descend deeper into the heart of the dungeon..",
@@ -180,7 +180,7 @@ pub fn render_all(tcod: &mut Tcod, game: &mut Game, objects: &[Object], fov_reco
     }
 
     let hp = objects[PLAYER].fighter.map_or(0, |f| f.hp);
-    let max_hp = objects[PLAYER].fighter.map_or(0, |f| f.max_hp);
+    let max_hp = objects[PLAYER].max_hp(game);
     render_bar(
         &mut tcod.panel,
         1,

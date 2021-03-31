@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 pub struct Equipment {
     pub slot: Slot,
     pub equipped: bool,
+    pub power_bonus: i32,
+    pub defense_bonus: i32,
+    pub hp_bonus: i32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]

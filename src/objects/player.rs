@@ -61,7 +61,8 @@ pub fn use_item(inventory_id: usize, tcod: &mut Tcod, game: &mut Game, objects: 
             Lightning => cast_lightning,
             Confuse => cast_confuse,
             Fireball => cast_fireball,
-            Equipment => toggle_equipment,
+            Sword => toggle_equipment,
+            Shield => toggle_equipment,
         };
         match on_use(inventory_id, tcod, game, objects) {
             UseResult::UsedUp => {
@@ -96,9 +97,9 @@ pub fn level_up(tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) {
             choice = menu(
                 "Level up! Choose stat to raise:\n",
                 &[
-                    format!("+20HP (Current: {})", fighter.max_hp),
-                    format!("+1ATK (Current: {})", fighter.power),
-                    format!("+1DEF (Current: {})", fighter.defense),
+                    format!("+20HP (Current: {})", fighter.base_max_hp),
+                    format!("+1ATK (Current: {})", fighter.base_power),
+                    format!("+1DEF (Current: {})", fighter.base_defense),
                 ],
                 LEVEL_SCREEN_WIDTH,
                 &mut tcod.root,
@@ -107,14 +108,14 @@ pub fn level_up(tcod: &mut Tcod, game: &mut Game, objects: &mut [Object]) {
         fighter.xp -= level_up_xp;
         match choice.unwrap() {
             0 => {
-                fighter.max_hp += 20;
-                fighter.hp = fighter.max_hp;
+                fighter.base_max_hp += 20;
+                fighter.hp = fighter.base_max_hp;
             }
             1 => {
-                fighter.power += 1;
+                fighter.base_power += 1;
             }
             2 => {
-                fighter.defense += 1;
+                fighter.base_defense += 1;
             }
             _ => unreachable!(),
         }

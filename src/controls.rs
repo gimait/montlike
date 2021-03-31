@@ -121,7 +121,12 @@ pub fn handle_keys(tcod: &mut Tcod, game: &mut Game, objects: &mut Vec<Object>) 
         Maximum HP: {}
         Attack: {}
         Defense: {}",
-                    level, fighter.xp, level_up_xp, fighter.max_hp, fighter.power, fighter.defense
+                    level,
+                    fighter.xp,
+                    level_up_xp,
+                    player.max_hp(game),
+                    player.power(game),
+                    player.defense(game)
                 );
                 msgbox(&msg, CHARACTER_SCREEN_WIDTH, &mut tcod.root);
             }
